@@ -1,5 +1,4 @@
 import gleam/io
-import gleam/int
 
 pub type OrderEvents {
   OrderPlaced
