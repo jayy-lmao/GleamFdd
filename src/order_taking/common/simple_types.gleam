@@ -1,7 +1,6 @@
-import gleam/io
 import gleam/string
+import gleam/regex.{Regex}
 import gleam/int
-import gleam/result
 
 // ===============================
 // Simple types and constrained types related to the OrderTaking domain.
@@ -86,21 +85,36 @@ type BillingAmount {
 // Reusable constructors and getters for constrained types
 // ===============================
 
-// /// Useful functions for constrained types
-// module ConstrainedType =
-
 /// Create a constrained string using the constructor provided
 /// Return Error if input is null, empty, or length > maxLen
 pub fn create_string(max_len: Int, str: String) -> Result(String, String) {
   str
   |> fn(str) {
     case [string.is_empty(str), string.length(str) <= max_len] {
-      [True, True] -> Ok(str)
-      [False, _] -> Error(str <> " must not be null or empty")
+      [False, True] -> Ok(str)
+      [True, _] -> Error(str <> " must not be null or empty")
       [_, False] ->
         Error(
           str <> "must not be more than " <> int.to_string(max_len) <> " chars",
         )
+    }
+  }
+}
+
+pub fn create_like(
+  pattern: String,
+  str: String,
+  error_message: String,
+) -> Result(String, String) {
+  let options = regex.Options(case_insensitive: False, multi_line: True)
+  let assert Ok(re) = regex.compile(pattern, options)
+
+  str
+  |> fn(str) {
+    case [string.is_empty(str), regex.check(re, str)] {
+      [False, True] -> Ok(str)
+      [True, _] -> Error(str <> " must not be null or empty")
+      [_, False] -> Error(error_message)
     }
   }
 }
