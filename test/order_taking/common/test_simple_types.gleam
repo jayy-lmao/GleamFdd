@@ -2,7 +2,7 @@ import gleam/result
 import gleam/io
 import gleeunit
 import gleeunit/should
-import order_taking/common/simple_types.{create_like, create_string}
+import order_taking/common/constrained_type.{create_like, create_string}
 
 pub fn main() {
   gleeunit.main()

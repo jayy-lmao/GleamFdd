@@ -1,17 +1,14 @@
 import gleam/string
-import gleam/regex.{Regex}
+import gleam/option.{None, Option, Some}
+import gleam/regex
 import gleam/int
+import order_taking/common/decimal
 
 // ===============================
 // Simple types and constrained types related to the OrderTaking domain.
 //
 // E.g. Single case discriminated unions (aka wrappers), enums, etc
 // ===============================
-
-/// Constrained to be 50 chars or less, not null
-type String50 {
-  String50(String)
-}
 
 /// An email address
 type EmailAddress {
@@ -74,98 +71,11 @@ type Price {
 type BillingAmount {
   BillingAmount(Float)
 }
-
 // /// Represents a PDF attachment
 // type PdfAttachment = {
 //     Name : string
 //     Bytes: byte[]
 //     }
-
-// ===============================
-// Reusable constructors and getters for constrained types
-// ===============================
-
-/// Create a constrained string using the constructor provided
-/// Return Error if input is null, empty, or length > maxLen
-pub fn create_string(max_len: Int, str: String) -> Result(String, String) {
-  str
-  |> fn(str) {
-    case [string.is_empty(str), string.length(str) <= max_len] {
-      [False, True] -> Ok(str)
-      [True, _] -> Error(str <> " must not be null or empty")
-      [_, False] ->
-        Error(
-          str <> "must not be more than " <> int.to_string(max_len) <> " chars",
-        )
-    }
-  }
-}
-
-pub fn create_like(
-  pattern: String,
-  str: String,
-  error_message: String,
-) -> Result(String, String) {
-  let options = regex.Options(case_insensitive: False, multi_line: True)
-  let assert Ok(re) = regex.compile(pattern, options)
-
-  str
-  |> fn(str) {
-    case [string.is_empty(str), regex.check(re, str)] {
-      [False, True] -> Ok(str)
-      [True, _] -> Error(str <> " must not be null or empty")
-      [_, False] -> Error(error_message)
-    }
-  }
-}
-//     /// Create a optional constrained string using the constructor provided
-//     /// Return None if input is null, empty.
-//     /// Return error if length > maxLen
-//     /// Return Some if the input is valid
-//     let createStringOption fieldName ctor maxLen str =
-//         if String.IsNullOrEmpty(str) then
-//             Ok None
-//         elif str.Length > maxLen then
-//             let msg = sprintf "%s must not be more than %i chars" fieldName maxLen
-//             Error msg
-//         else
-//             Ok (ctor str |> Some)
-
-//     /// Create a constrained integer using the constructor provided
-//     /// Return Error if input is less than minVal or more than maxVal
-//     let createInt fieldName ctor minVal maxVal i =
-//         if i < minVal then
-//             let msg = sprintf "%s: Must not be less than %i" fieldName minVal
-//             Error msg
-//         elif i > maxVal then
-//             let msg = sprintf "%s: Must not be greater than %i" fieldName maxVal
-//             Error msg
-//         else
-//             Ok (ctor i)
-
-//     /// Create a constrained decimal using the constructor provided
-//     /// Return Error if input is less than minVal or more than maxVal
-//     let createDecimal fieldName ctor minVal maxVal i =
-//         if i < minVal then
-//             let msg = sprintf "%s: Must not be less than %M" fieldName minVal
-//             Error msg
-//         elif i > maxVal then
-//             let msg = sprintf "%s: Must not be greater than %M" fieldName maxVal
-//             Error msg
-//         else
-//             Ok (ctor i)
-
-//     /// Create a constrained string using the constructor provided
-//     /// Return Error if input is null. empty, or does not match the regex pattern
-//     let createLike fieldName  ctor pattern str =
-//         if String.IsNullOrEmpty(str) then
-//             let msg = sprintf "%s: Must not be null or empty" fieldName
-//             Error msg
-//         elif System.Text.RegularExpressions.Regex.IsMatch(str,pattern) then
-//             Ok (ctor str)
-//         else
-//             let msg = sprintf "%s: '%s' must match the pattern '%s'" fieldName str pattern
-//             Error msg
 
 // // F# VERSION DIFFERENCE
 // // Modules with the same name as a non-generic type will cause an error in versions of F# before v4.1 (VS2017)
@@ -174,23 +84,6 @@ pub fn create_like(
 // [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 // module String50 =
 // *)
-
-// module String50 =
-
-//     /// Return the value inside a String50
-//     let value (String50 str) = str
-
-//     /// Create an String50 from a string
-//     /// Return Error if input is null, empty, or length > 50
-//     let create fieldName str =
-//         ConstrainedType.createString fieldName String50 50 str
-
-//     /// Create an String50 from a string
-//     /// Return None if input is null, empty.
-//     /// Return error if length > maxLen
-//     /// Return Some if the input is valid
-//     let createOption fieldName str =
-//         ConstrainedType.createStringOption fieldName String50 50 str
 
 // module EmailAddress =
 
