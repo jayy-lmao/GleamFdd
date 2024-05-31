@@ -10,8 +10,9 @@ pub type String50 {
 /// Create an String50 from a string
 /// Return Error if input is null, empty, or length > 50
 pub fn create(str) -> Result(String50, String) {
-  constrained_type.create_string(50, str)
-  |> result.map(fn(str) { String50(str) })
+  str
+  |> constrained_type.create_string(50)
+  |> result.map(String50)
 }
 
 /// Create an String50 from a string
@@ -19,9 +20,10 @@ pub fn create(str) -> Result(String50, String) {
 /// Return error if length > maxLen
 /// Return Some if the input is valid
 pub fn create_option(str) -> Result(option.Option(String50), String) {
-  constrained_type.create_string_option(50, str)
+  str
+  |> constrained_type.create_string_option(50)
   |> result.map(fn(optional_string) {
     optional_string
-    |> option.map(fn(str) { String50(str) })
+    |> option.map(String50)
   })
 }
