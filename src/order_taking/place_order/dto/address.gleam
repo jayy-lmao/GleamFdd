@@ -40,18 +40,21 @@ pub fn to_address(dto: AddressDto) -> Result(compound_types.Address, String) {
     dto.address_line_1
     |> string50.create("address_line_1"),
   )
-  use address_line_2 <- try(case dto.address_line_2 {
-    Some(addr) -> string50.create_option(addr, "address_line_2")
-    None -> Ok(None)
-  })
-  use address_line_3 <- try(case dto.address_line_2 {
-    Some(addr) -> string50.create_option(addr, "address_line_3")
-    None -> Ok(None)
-  })
-  use address_line_4 <- try(case dto.address_line_2 {
-    Some(addr) -> string50.create_option(addr, "address_line_4")
-    None -> Ok(None)
-  })
+  use address_line_2 <- try(
+    dto.address_line_2
+    |> option.map(fn(addr) { string50.create_option(addr, "address_line_2") })
+    |> option.unwrap(Ok(None)),
+  )
+  use address_line_3 <- try(
+    dto.address_line_3
+    |> option.map(fn(addr) { string50.create_option(addr, "address_line_3") })
+    |> option.unwrap(Ok(None)),
+  )
+  use address_line_4 <- try(
+    dto.address_line_4
+    |> option.map(fn(addr) { string50.create_option(addr, "address_line_4") })
+    |> option.unwrap(Ok(None)),
+  )
   use city <- try(dto.city |> string50.create("city"))
   use zip_code <- try(dto.zip_code |> zip_code.create("zip_code"))
 
