@@ -12,6 +12,14 @@ pub type OrderQuantity {
   Kilogram(KilogramQuantity)
 }
 
+/// Return the value inside an OrderQuantity
+pub fn value(qty) {
+  case qty {
+    Unit(qty) -> unit_quantity.value(qty) |> decimal.from_int
+    Kilogram(qty) -> kilogram_quantity.value(qty)
+  }
+}
+
 pub fn create(
   code: ProductCode,
   quantity: String,

@@ -6,6 +6,12 @@ pub type GizmoCode {
   GizmoCode(String)
 }
 
+/// Return the value inside an GizmoCode
+pub fn value(id) -> String {
+  let GizmoCode(str) = id
+  str
+}
+
 /// Create an GizmoCode from a string
 /// Return Error if input is null, empty, or not matching pattern
 pub fn create(str, field_name) -> Result(GizmoCode, String) {

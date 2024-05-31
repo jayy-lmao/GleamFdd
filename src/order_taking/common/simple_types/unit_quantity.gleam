@@ -6,6 +6,12 @@ pub type UnitQuantity {
   UnitQuantity(Int)
 }
 
+/// Return the value inside an UnitQuantity
+pub fn value(qty) -> Int {
+  let UnitQuantity(i) = qty
+  i
+}
+
 //     /// Create a UnitQuantity from a int
 //     /// Return Error if input is not an integer between 1 and 1000
 pub fn create(quantity: Int, field_name: String) -> Result(UnitQuantity, String) {

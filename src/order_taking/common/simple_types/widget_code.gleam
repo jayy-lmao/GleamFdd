@@ -6,6 +6,12 @@ pub type WidgetCode {
   WidgetCode(String)
 }
 
+/// Return the value inside an WidgetCode
+pub fn value(id) -> String {
+  let WidgetCode(str) = id
+  str
+}
+
 /// Create an WidgetCode from a string
 /// Return Error if input is null. empty, or not matching pattern
 pub fn create(str, field_name) -> Result(WidgetCode, String) {

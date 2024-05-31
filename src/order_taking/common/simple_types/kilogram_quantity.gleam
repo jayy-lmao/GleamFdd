@@ -7,8 +7,14 @@ pub type KilogramQuantity {
   KilogramQuantity(Decimal)
 }
 
-//     /// Create a KilogramQuantity from a int
-//     /// Return Error if input is not an integer between 1 and 1000
+/// Return the value inside an KilogramQuantity
+pub fn value(qty) -> Decimal {
+  let KilogramQuantity(i) = qty
+  i
+}
+
+/// Create a KilogramQuantity from a int
+/// Return Error if input is not an integer between 1 and 1000
 pub fn create(
   quantity: Decimal,
   field_name: String,

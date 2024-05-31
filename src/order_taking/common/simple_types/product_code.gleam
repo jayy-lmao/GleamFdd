@@ -9,6 +9,14 @@ pub type ProductCode {
   Gizmo(GizmoCode)
 }
 
+/// Return the value inside an ProductCode
+pub fn value(id) -> String {
+  case id {
+    Widget(code) -> widget_code.value(code)
+    Gizmo(code) -> gizmo_code.value(code)
+  }
+}
+
 /// Create an ProductCode from a string
 /// Return Error if input is null, empty, or not matching pattern
 pub fn create(code, field_name) -> Result(ProductCode, String) {
