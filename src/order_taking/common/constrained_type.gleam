@@ -1,6 +1,7 @@
 import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/regex
+import gleam/result
 import gleam/string
 import order_taking/common/decimal
 
@@ -91,7 +92,10 @@ pub fn create_like_string(
   error_message: String,
 ) -> Result(String, String) {
   let options = regex.Options(case_insensitive: False, multi_line: True)
-  let assert Ok(re) = regex.compile(pattern, options)
+  use re <- result.try(
+    regex.compile(pattern, options)
+    |> result.map_error(fn(_) { "Could not compile regex" <> pattern }),
+  )
 
   case string.is_empty(str), regex.check(re, str) {
     False, True -> Ok(str)

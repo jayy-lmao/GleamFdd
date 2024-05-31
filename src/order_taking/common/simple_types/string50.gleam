@@ -7,6 +7,12 @@ pub type String50 {
   String50(String)
 }
 
+/// Return the value inside a String50
+pub fn value(str50: String50) -> String {
+  let String50(str) = str50
+  str
+}
+
 /// Create an String50 from a string
 /// Return Error if input is null, empty, or length > 50
 pub fn create(str) -> Result(String50, String) {

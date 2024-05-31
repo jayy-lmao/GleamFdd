@@ -6,6 +6,12 @@ pub type EmailAddress {
   EmailAddress(String)
 }
 
+/// Return the value inside an EmailAddress
+pub fn value(addr: EmailAddress) -> String {
+  let EmailAddress(str) = addr
+  str
+}
+
 /// Create an EmailAddress from a string
 /// Return Error if input is null, empty, or doesn't have an "@" in it
 pub fn create(str) -> Result(EmailAddress, String) {
