@@ -6,6 +6,12 @@ pub type ZipCode {
   ZipCode(String)
 }
 
+/// Return the value inside a ZipCode
+pub fn value(zip_code: ZipCode) -> String {
+  let ZipCode(str) = zip_code
+  str
+}
+
 /// Create a ZipCode from a string
 /// Return Error if input is null, empty, or doesn't have 5 digits
 pub fn create(str, field_name) -> Result(ZipCode, String) {

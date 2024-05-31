@@ -1,3 +1,4 @@
+import gleam/option.{type Option}
 import order_taking/common/compound_types.{type Address, type CustomerInfo}
 import order_taking/common/decimal.{type Decimal}
 import order_taking/common/simple_types/billing_amount.{type BillingAmount}
@@ -27,9 +28,9 @@ pub type UnvalidatedCustomerInfo {
 pub type UnvalidatedAddress {
   UnvalidatedAddress(
     address_line_1: String,
-    address_line_2: String,
-    address_line_3: String,
-    address_line_4: String,
+    address_line_2: Option(String),
+    address_line_3: Option(String),
+    address_line_4: Option(String),
     city: String,
     zip_code: String,
   )
