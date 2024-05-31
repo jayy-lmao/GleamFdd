@@ -8,8 +8,8 @@ pub type OrderId {
 
 /// Create an OrderId from a string
 /// Return Error if input is null, empty, or length > 50
-pub fn create(str) -> Result(OrderId, String) {
+pub fn create(str, field_name) -> Result(OrderId, String) {
   str
-  |> constrained_type.create_string(50)
+  |> constrained_type.create_string(50, field_name)
   |> result.map(OrderId)
 }

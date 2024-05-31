@@ -15,17 +15,18 @@ pub type OrderQuantity {
 pub fn create(
   code: ProductCode,
   quantity: String,
+  field_name: String,
 ) -> Result(OrderQuantity, String) {
   case code {
     product_code.Gizmo(_) ->
       int.parse(quantity)
       |> result.map_error(fn(_) { "Invalid int" })
-      |> result.then(fn(i) { unit_quantity.create(i) })
+      |> result.then(fn(i) { unit_quantity.create(i, field_name) })
       |> result.map(Unit)
     product_code.Widget(_) ->
       decimal.parse(quantity)
       |> option.to_result("Invalid widget quanitity")
-      |> result.then(fn(i) { kilogram_quantity.create(i) })
+      |> result.then(fn(i) { kilogram_quantity.create(i, field_name) })
       |> result.map(Kilogram)
   }
 }

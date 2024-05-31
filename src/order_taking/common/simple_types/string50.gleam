@@ -15,9 +15,9 @@ pub fn value(str50: String50) -> String {
 
 /// Create an String50 from a string
 /// Return Error if input is null, empty, or length > 50
-pub fn create(str) -> Result(String50, String) {
+pub fn create(str, field_name) -> Result(String50, String) {
   str
-  |> constrained_type.create_string(50)
+  |> constrained_type.create_string(50, field_name)
   |> result.map(String50)
 }
 
@@ -25,9 +25,9 @@ pub fn create(str) -> Result(String50, String) {
 /// Return None if input is null, empty.
 /// Return error if length > maxLen
 /// Return Some if the input is valid
-pub fn create_option(str) -> Result(option.Option(String50), String) {
+pub fn create_option(str, field_name) -> Result(option.Option(String50), String) {
   str
-  |> constrained_type.create_string_option(50)
+  |> constrained_type.create_string_option(50, field_name)
   |> result.map(fn(optional_string) {
     optional_string
     |> option.map(String50)

@@ -11,15 +11,15 @@ pub type ProductCode {
 
 /// Create an ProductCode from a string
 /// Return Error if input is null, empty, or not matching pattern
-pub fn create(code) -> Result(ProductCode, String) {
+pub fn create(code, field_name) -> Result(ProductCode, String) {
   case string.starts_with(code, "G"), string.starts_with(code, "W") {
     True, _ ->
       code
-      |> gizmo_code.create
+      |> gizmo_code.create(field_name)
       |> result.map(Gizmo)
     _, True ->
       code
-      |> widget_code.create
+      |> widget_code.create(field_name)
       |> result.map(Widget)
     _, _ -> Error(code <> "Must be a valid Gizmo code or Widget code")
   }

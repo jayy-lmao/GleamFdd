@@ -16,6 +16,7 @@ pub fn create(dec: Decimal) -> Result(BillingAmount, String) {
   |> constrained_type.create_decimal(
     decimal.from_int(0),
     decimal.from_int(1000),
+    "BillingAmount",
   )
   |> result.map(BillingAmount)
 }

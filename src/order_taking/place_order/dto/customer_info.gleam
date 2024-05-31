@@ -38,9 +38,11 @@ pub fn to_customer_info(
   dto: CustomerInfoDto,
 ) -> Result(compound_types.CustomerInfo, String) {
   // get each (validated) simple type from the DTO as a success or failure
-  use first <- result.try(dto.first_name |> string50.create)
-  use last <- result.try(dto.last_name |> string50.create)
-  use email <- result.try(dto.email_address |> email_address.create)
+  use first <- result.try(dto.first_name |> string50.create("first_name"))
+  use last <- result.try(dto.last_name |> string50.create("last_name"))
+  use email <- result.try(
+    dto.email_address |> email_address.create("email_address"),
+  )
 
   // combine the components to create the domain object
   let name = compound_types.PersonalName(first_name: first, last_name: last)

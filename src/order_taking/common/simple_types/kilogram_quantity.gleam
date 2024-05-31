@@ -9,11 +9,15 @@ pub type KilogramQuantity {
 
 //     /// Create a KilogramQuantity from a int
 //     /// Return Error if input is not an integer between 1 and 1000
-pub fn create(quantity: Decimal) -> Result(KilogramQuantity, String) {
+pub fn create(
+  quantity: Decimal,
+  field_name: String,
+) -> Result(KilogramQuantity, String) {
   quantity
   |> constrained_type.create_decimal(
     decimal.from_int(1),
     decimal.from_int(1000),
+    field_name,
   )
   |> result.map(KilogramQuantity)
 }

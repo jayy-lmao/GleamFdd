@@ -8,8 +8,8 @@ pub type UnitQuantity {
 
 //     /// Create a UnitQuantity from a int
 //     /// Return Error if input is not an integer between 1 and 1000
-pub fn create(quantity: Int) -> Result(UnitQuantity, String) {
+pub fn create(quantity: Int, field_name: String) -> Result(UnitQuantity, String) {
   quantity
-  |> constrained_type.create_int(1, 1000)
+  |> constrained_type.create_int(1, 1000, field_name)
   |> result.map(UnitQuantity)
 }

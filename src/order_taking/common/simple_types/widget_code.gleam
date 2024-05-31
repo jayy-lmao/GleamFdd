@@ -8,10 +8,10 @@ pub type WidgetCode {
 
 /// Create an WidgetCode from a string
 /// Return Error if input is null. empty, or not matching pattern
-pub fn create(str) -> Result(WidgetCode, String) {
+pub fn create(str, field_name) -> Result(WidgetCode, String) {
   // anything separated by an "@"
   let pattern = "W\\d{4}"
   str
-  |> constrained_type.create_like_string(pattern, "must be a valid email")
+  |> constrained_type.create_like_string(pattern, field_name)
   |> result.map(WidgetCode)
 }

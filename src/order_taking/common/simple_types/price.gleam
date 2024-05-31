@@ -20,6 +20,7 @@ pub fn create(dec: Decimal) -> Result(Price, String) {
   |> constrained_type.create_decimal(
     decimal.from_int(0),
     decimal.from_int(1000),
+    "Price",
   )
   |> result.map_error(fn(err) {
     "Not expecting Price to be out of bounds: " <> err

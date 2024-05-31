@@ -8,10 +8,10 @@ pub type GizmoCode {
 
 /// Create an GizmoCode from a string
 /// Return Error if input is null, empty, or not matching pattern
-pub fn create(str) -> Result(GizmoCode, String) {
+pub fn create(str, field_name) -> Result(GizmoCode, String) {
   // anything separated by an "@"
   let pattern = "G\\d{3}"
   str
-  |> constrained_type.create_like_string(pattern, "must be a valid email")
+  |> constrained_type.create_like_string(pattern, field_name)
   |> result.map(GizmoCode)
 }
