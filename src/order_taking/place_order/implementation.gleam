@@ -74,11 +74,9 @@ type ValidatedOrder {
   )
 }
 
-pub type ValidateOrder =
-  fn(CheckProductCodeExists) ->
-    fn(CheckAddressExists) ->
-      fn(public_types.UnvalidatedOrder) ->
-        Result(ValidatedOrder, public_types.ValidationError)
+type ValidateOrder =
+  fn(public_types.UnvalidatedOrder) ->
+    Result(ValidatedOrder, public_types.ValidationError)
 
 // ---------------------------
 // Pricing step
@@ -89,10 +87,9 @@ type GetProductPrice =
 
 // priced state is defined Domain.WorkflowTypes
 
-pub type PriceOrder =
-  fn(GetProductPrice) ->
-    fn(ValidatedOrder) ->
-      Result(public_types.PricedOrder, public_types.PricingError)
+type PriceOrder =
+  fn(ValidatedOrder) ->
+    Result(public_types.PricedOrder, public_types.PricingError)
 
 // price order
 
@@ -127,20 +124,9 @@ pub type SendResult {
 type SendOrderAcknowledgment =
   fn(OrderAcknowledgment) -> SendResult
 
-pub type AcknowledgeOrder =
-  fn(CreateOrderAcknowledgmentLetter) ->
-    fn(SendOrderAcknowledgment) ->
-      fn(public_types.PricedOrder) ->
-        option.Option(public_types.OrderAcknowledgmentSent)
-
-// ---------------------------
-// Create events
-// ---------------------------
-
-pub type CreateEvents =
+type AcknowledgeOrder =
   fn(public_types.PricedOrder) ->
-    fn(option.Option(public_types.OrderAcknowledgmentSent)) ->
-      List(public_types.PlaceOrderEvent)
+    option.Option(public_types.OrderAcknowledgmentSent)
 
 // ======================================================
 // Section 2 : Implementation
@@ -329,48 +315,49 @@ fn to_validated_order_line(check_product_code_exists: CheckProductCodeExists) {
 }
 
 fn validate_order(
-  check_product_code_exists,
-  check_address_exists,
-  unvalidated_order: public_types.UnvalidatedOrder,
-) {
-  use order_id <- result.try(
-    unvalidated_order.order_id
-    |> to_order_id,
-  )
-  use customer_info <- result.try(
-    unvalidated_order.customer_info
-    |> to_customer_info,
-  )
-  use checked_shipping_address <- result.try(
-    unvalidated_order.shipping_address
-    |> to_checked_address(check_address_exists),
-  )
-  use shipping_address <- result.try(
-    checked_shipping_address
-    |> to_address,
-  )
-  use checked_billing_address <- result.try(
-    unvalidated_order.billing_address
-    |> to_checked_address(check_address_exists),
-  )
-  use billing_address <- result.try(
-    checked_billing_address
-    |> to_address,
-  )
-  use lines <- result.try(
-    unvalidated_order.lines
-    |> list.map(to_validated_order_line(check_product_code_exists))
-    |> result.all,
-  )
-  let validated_order =
-    ValidatedOrder(
-      order_id: order_id,
-      customer_info: customer_info,
-      shipping_address: shipping_address,
-      billing_address: billing_address,
-      lines: lines,
+  check_product_code_exists: CheckProductCodeExists,
+  check_address_exists: CheckAddressExists,
+) -> ValidateOrder {
+  fn(unvalidated_order: public_types.UnvalidatedOrder) {
+    use order_id <- result.try(
+      unvalidated_order.order_id
+      |> to_order_id,
     )
-  Ok(validated_order)
+    use customer_info <- result.try(
+      unvalidated_order.customer_info
+      |> to_customer_info,
+    )
+    use checked_shipping_address <- result.try(
+      unvalidated_order.shipping_address
+      |> to_checked_address(check_address_exists),
+    )
+    use shipping_address <- result.try(
+      checked_shipping_address
+      |> to_address,
+    )
+    use checked_billing_address <- result.try(
+      unvalidated_order.billing_address
+      |> to_checked_address(check_address_exists),
+    )
+    use billing_address <- result.try(
+      checked_billing_address
+      |> to_address,
+    )
+    use lines <- result.try(
+      unvalidated_order.lines
+      |> list.map(to_validated_order_line(check_product_code_exists))
+      |> result.all,
+    )
+    let validated_order =
+      ValidatedOrder(
+        order_id: order_id,
+        customer_info: customer_info,
+        shipping_address: shipping_address,
+        billing_address: billing_address,
+        lines: lines,
+      )
+    Ok(validated_order)
+  }
 }
 
 // ---------------------------
@@ -398,33 +385,35 @@ fn to_priced_order_line(get_product_price: GetProductPrice) {
   }
 }
 
-fn price_order(get_product_price, validated_order: ValidatedOrder) {
-  use lines <- try(
-    validated_order.lines
-    |> list.map(to_priced_order_line(get_product_price))
-    |> result.all,
-    // convert list of Results to a single Result
-  )
-
-  use amount_to_bill <- try(
-    lines
-    |> list.map(fn(line) { line.line_price })
-    // get each line price
-    |> billing_amount.sum_prices
-    // add them together as a BillingAmount
-    |> result.map_error(public_types.PricingError),
-    // convert to PlaceOrderError
-  )
-  let priced_order =
-    public_types.PricedOrder(
-      order_id: validated_order.order_id,
-      customer_info: validated_order.customer_info,
-      shipping_address: validated_order.shipping_address,
-      billing_address: validated_order.billing_address,
-      lines: lines,
-      amount_to_bill: amount_to_bill,
+fn price_order(get_product_price) -> PriceOrder {
+  fn(validated_order: ValidatedOrder) {
+    use lines <- try(
+      validated_order.lines
+      |> list.map(to_priced_order_line(get_product_price))
+      |> result.all,
+      // convert list of Results to a single Result
     )
-  Ok(priced_order)
+
+    use amount_to_bill <- try(
+      lines
+      |> list.map(fn(line) { line.line_price })
+      // get each line price
+      |> billing_amount.sum_prices
+      // add them together as a BillingAmount
+      |> result.map_error(public_types.PricingError),
+      // convert to PlaceOrderError
+    )
+    let priced_order =
+      public_types.PricedOrder(
+        order_id: validated_order.order_id,
+        customer_info: validated_order.customer_info,
+        shipping_address: validated_order.shipping_address,
+        billing_address: validated_order.billing_address,
+        lines: lines,
+        amount_to_bill: amount_to_bill,
+      )
+    Ok(priced_order)
+  }
 }
 
 // ---------------------------
@@ -432,30 +421,31 @@ fn price_order(get_product_price, validated_order: ValidatedOrder) {
 // ---------------------------
 
 fn acknowledge_order(
-  priced_order: public_types.PricedOrder,
-  create_acknowledgment_letter,
-  send_acknowledgment,
-) {
-  let letter = create_acknowledgment_letter(priced_order)
-  let acknowledgment =
-    OrderAcknowledgment(
-      email_address: priced_order.customer_info.email_address,
-      letter: letter,
-    )
+  create_acknowledgment_letter: CreateOrderAcknowledgmentLetter,
+  send_acknowledgment: SendOrderAcknowledgment,
+) -> AcknowledgeOrder {
+  fn(priced_order: public_types.PricedOrder) {
+    let letter = create_acknowledgment_letter(priced_order)
+    let acknowledgment =
+      OrderAcknowledgment(
+        email_address: priced_order.customer_info.email_address,
+        letter: letter,
+      )
 
-  // if the acknowledgement was successfully sent,
-  // return the corresponding event, else return None
-  case send_acknowledgment(acknowledgment) {
-    Sent -> {
-      let event =
-        public_types.OrderAcknowledgmentSent(
-          order_id: priced_order.order_id,
-          email_address: priced_order.customer_info.email_address,
-        )
-      option.Some(event)
-    }
-    NotSent -> {
-      option.None
+    // if the acknowledgement was successfully sent,
+    // return the corresponding event, else return None
+    case send_acknowledgment(acknowledgment) {
+      Sent -> {
+        let event =
+          public_types.OrderAcknowledgmentSent(
+            order_id: priced_order.order_id,
+            email_address: priced_order.customer_info.email_address,
+          )
+        option.Some(event)
+      }
+      NotSent -> {
+        option.None
+      }
     }
   }
 }
@@ -537,15 +527,13 @@ pub fn place_order(
 
   fn(unvalidated_order) {
     use validated_order <- try(
-      validate_order(
-        check_product_exists,
-        check_address_exists,
-        unvalidated_order,
-      )
+      unvalidated_order
+      |> validate_order(check_product_exists, check_address_exists)
       |> result.map_error(public_types.ValidationErrorKind),
     )
     use priced_order <- try(
-      price_order(get_product_price, validated_order)
+      validated_order
+      |> price_order(get_product_price)
       |> result.map_error(public_types.PricingErrorKind),
     )
 
