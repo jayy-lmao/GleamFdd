@@ -99,7 +99,7 @@ pub type BillableOrderPlaced {
 
 /// The possible events resulting from the PlaceOrder workflow
 /// Not all events will occur, depending on the logic of the workflow
-pub type PlaceOrderEvent {
+pub type PlacedOrderEvent {
   OrderPlacedEvent(OrderPlaced)
   BillableOrderPlacedEvent(BillableOrderPlaced)
   AcknowledgmentSentEvent(OrderAcknowledgmentSent)
@@ -126,13 +126,13 @@ pub type RemoteServiceError {
 }
 
 pub type PlaceOrderError {
-  Validation(ValidationError)
-  Pricing(PricingError)
-  RemoteService(RemoteServiceError)
+  ValidationErrorKind(ValidationError)
+  PricingErrorKind(PricingError)
+  RemoteServiceErrorKind(RemoteServiceError)
 }
 
 // ------------------------------------
 // the workflow itself
 
 pub type PlaceOrder =
-  fn(UnvalidatedOrder) -> Result(List(PlaceOrderEvent), PlaceOrderError)
+  fn(UnvalidatedOrder) -> Result(List(PlacedOrderEvent), PlaceOrderError)

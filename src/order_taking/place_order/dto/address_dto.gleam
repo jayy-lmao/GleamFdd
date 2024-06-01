@@ -1,4 +1,4 @@
-import gleam/option.{type Option, None, Some}
+import gleam/option.{type Option, None}
 import gleam/result.{try}
 import order_taking/common/compound_types
 import order_taking/common/public_types

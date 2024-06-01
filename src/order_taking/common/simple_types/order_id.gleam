@@ -6,6 +6,12 @@ pub type OrderId {
   OrderId(String)
 }
 
+/// Return the value inside an OrderId
+pub fn value(id) -> String {
+  let OrderId(str) = id
+  str
+}
+
 /// Create an OrderId from a string
 /// Return Error if input is null, empty, or length > 50
 pub fn create(str, field_name) -> Result(OrderId, String) {

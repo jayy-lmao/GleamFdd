@@ -9,6 +9,12 @@ pub type BillingAmount {
   BillingAmount(Decimal)
 }
 
+/// Return the value inside a BillingAmount
+pub fn value(amount: BillingAmount) -> Decimal {
+  let BillingAmount(p) = amount
+  p
+}
+
 /// Create a BillingAmount from a decimal.
 /// Return Error if input is not a decimal between 0.0 and 10000.00
 pub fn create(dec: Decimal) -> Result(BillingAmount, String) {
