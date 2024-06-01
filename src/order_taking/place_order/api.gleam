@@ -6,10 +6,13 @@
 // 3) The output is turned into a DTO which is turned into a HttpResponse
 // ======================================================
 
+import gleam/http/request
 import gleam/http/response
 import gleam/json
 import gleam/list
+import gleam/result
 import order_taking/common/simple_types/price
+import order_taking/place_order/dto/order_form_dto
 import order_taking/place_order/dto/place_order_error_dto
 import order_taking/place_order/dto/place_order_event_dto
 import order_taking/place_order/implementation
@@ -35,12 +38,12 @@ pub fn check_product_exists(_product_code) {
 pub fn check_address_exists(unvalidated_address) {
   let checked_address = implementation.CheckedAddress(unvalidated_address)
 
-  checked_address
+  Ok(checked_address)
 }
 
 /// dummy implementation
 pub fn get_product_price(_product_code) {
-  price.from_int(1)
+  result.unwrap(price.from_int(1), price.zero())
 }
 
 /// dummy implementation
@@ -94,28 +97,52 @@ pub fn workflow_result_to_http_reponse(result) -> response.Response(String) {
     }
   }
 }
-// let placeOrderApi : PlaceOrderApi =
-//     fun request ->
-//         // following the approach in "A Complete Serialization Pipeline" in chapter 11
 
-//         // start with a string
-//         let orderFormJson = request.Body
-//         let orderForm = deserializeJson<OrderFormDto>(orderFormJson)
-//         // convert to domain object
-//         let unvalidatedOrder = orderForm |> OrderFormDto.toUnvalidatedOrder
+pub fn place_order_api(
+  request: request.Request(String),
+) -> response.Response(String) {
+  // following the approach in "A Complete Serialization Pipeline" in chapter 11
 
-//         // setup the dependencies. See "Injecting Dependencies" in chapter 9
-//         let workflow =
-//             Implementation.placeOrder
-//                 checkProductExists // dependency
-//                 checkAddressExists // dependency
-//                 getProductPrice    // dependency
-//                 createOrderAcknowledgmentLetter  // dependency
-//                 sendOrderAcknowledgment // dependency
+  // start with a string
+  let order_form_json = request.body
+  let order_form =
+    json.decode(from: order_form_json, using: order_form_dto.decoder())
 
-//         // now we are in the pure domain
-//         let asyncResult = workflow unvalidatedOrder
+  case order_form {
+    Ok(order_form) -> {
+      // convert to domain object
+      let unvalidated_order = order_form |> order_form_dto.to_unvalidated_order
 
-//         // now convert from the pure domain back to a HttpResponse
-//         asyncResult
-//         |> Async.map (workflowResultToHttpReponse)
+      // setup the dependencies. See "Injecting Dependencies" in chapter 9
+      let workflow =
+        implementation.place_order(
+          check_product_exists,
+          // dependency
+          check_address_exists,
+          // dependency
+          get_product_price,
+          // dependency
+          create_order_acknowledgment_letter,
+          // dependency
+          send_order_acknowledgment,
+          // dependency
+        )
+
+      // now we are in the pure domain
+      let result = workflow(unvalidated_order)
+
+      // now convert from the pure domain back to a HttpResponse
+      result
+      |> workflow_result_to_http_reponse
+    }
+    Error(_json_error) -> {
+      let response =
+        response.Response(
+          status: 403,
+          body: "JSON deserialisation error",
+          headers: [],
+        )
+      response
+    }
+  }
+}

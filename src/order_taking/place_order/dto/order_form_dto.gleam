@@ -1,17 +1,33 @@
+import gleam/dynamic
 import gleam/list
 import order_taking/common/public_types
-import order_taking/place_order/dto/address_dto.{type AddressDto}
-import order_taking/place_order/dto/customer_info_dto.{type CustomerInfoDto}
-import order_taking/place_order/dto/order_line_dto.{type OrderFormLineDto}
+import order_taking/place_order/dto/address_dto
+import order_taking/place_order/dto/customer_info_dto
+import order_taking/place_order/dto/order_line_dto
 
 pub type OrderFormDto {
   OrderFormDto(
     order_id: String,
-    customer_info: CustomerInfoDto,
-    shipping_address: AddressDto,
-    billing_address: AddressDto,
-    lines: List(OrderFormLineDto),
+    customer_info: customer_info_dto.CustomerInfoDto,
+    shipping_address: address_dto.AddressDto,
+    billing_address: address_dto.AddressDto,
+    lines: List(order_line_dto.OrderFormLineDto),
   )
+}
+
+/// For deserialising
+pub fn decoder() {
+  let decoder =
+    dynamic.decode5(
+      OrderFormDto,
+      dynamic.field("order_id", of: dynamic.string),
+      dynamic.field("customer_info", of: customer_info_dto.decoder()),
+      dynamic.field("shipping_address", of: address_dto.decoder()),
+      dynamic.field("billing_address", of: address_dto.decoder()),
+      dynamic.field("lines", of: dynamic.list(order_line_dto.decoder())),
+    )
+
+  decoder
 }
 
 /// Convert the OrderForm into a UnvalidatedOrder

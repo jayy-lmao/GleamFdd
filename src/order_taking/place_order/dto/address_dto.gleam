@@ -19,7 +19,7 @@ pub type AddressDto {
 }
 
 /// For deserialising
-pub fn from_json(json_string: String) -> Result(AddressDto, json.DecodeError) {
+pub fn decoder() {
   let decoder =
     dynamic.decode6(
       AddressDto,
@@ -31,7 +31,7 @@ pub fn from_json(json_string: String) -> Result(AddressDto, json.DecodeError) {
       dynamic.field("zip_code", of: dynamic.string),
     )
 
-  json.decode(from: json_string, using: decoder)
+  decoder
 }
 
 /// For serialising

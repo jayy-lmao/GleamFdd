@@ -15,9 +15,7 @@ pub type CustomerInfoDto {
 }
 
 /// For deserialising
-pub fn from_json(
-  json_string: String,
-) -> Result(CustomerInfoDto, json.DecodeError) {
+pub fn decoder(json_string: String) {
   let decoder =
     dynamic.decode3(
       CustomerInfoDto,
@@ -26,7 +24,7 @@ pub fn from_json(
       dynamic.field("email_address", of: dynamic.string),
     )
 
-  json.decode(from: json_string, using: decoder)
+  decoder
 }
 
 /// For serialising

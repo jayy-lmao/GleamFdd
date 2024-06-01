@@ -12,9 +12,7 @@ pub type OrderFormLineDto {
 }
 
 /// For deserialising
-pub fn from_json(
-  json_string: String,
-) -> Result(OrderFormLineDto, json.DecodeError) {
+pub fn decoder() {
   let decoder =
     dynamic.decode3(
       OrderFormLineDto,
@@ -23,7 +21,7 @@ pub fn from_json(
       dynamic.field("quantity", of: dynamic.string),
     )
 
-  json.decode(from: json_string, using: decoder)
+  decoder
 }
 
 /// For serialising
