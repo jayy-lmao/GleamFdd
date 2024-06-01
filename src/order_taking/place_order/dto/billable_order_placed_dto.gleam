@@ -1,15 +1,29 @@
-import order_taking/common/decimal.{type Decimal}
+import gleam/json
+import order_taking/common/decimal
 import order_taking/common/public_types
 import order_taking/common/simple_types/billing_amount
 import order_taking/common/simple_types/order_id
-import order_taking/place_order/dto/address_dto.{type AddressDto}
+import order_taking/place_order/dto/address_dto
 
 pub type BillableOrderPlacedDto {
   BillableOrderPlacedDto(
     order_id: String,
-    billing_address: AddressDto,
-    amount_to_bill: Decimal,
+    billing_address: address_dto.AddressDto,
+    amount_to_bill: decimal.Decimal,
   )
+}
+
+// For serialising
+pub fn to_json(dto: BillableOrderPlacedDto) {
+  json.object([
+    #("order_id", json.string(dto.order_id)),
+    #("amount_to_bill", json.string(decimal.to_string(dto.amount_to_bill))),
+    #(
+      "address",
+      dto.billing_address
+        |> address_dto.to_json,
+    ),
+  ])
 }
 
 /// Convert a BillableOrderPlaced object into the corresponding DTO.

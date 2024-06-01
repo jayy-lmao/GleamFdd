@@ -17,6 +17,7 @@ pub type AddressDto {
   )
 }
 
+// For serialising
 pub fn to_json(dto: AddressDto) {
   json.object([
     #("address_line_1", json.string(dto.address_line_1)),
@@ -38,6 +39,8 @@ pub fn to_json(dto: AddressDto) {
         |> option.map(json.string)
         |> option.unwrap(json.null()),
     ),
+    #("city", json.string(dto.city)),
+    #("zip_code", json.string(dto.zip_code)),
   ])
 }
 

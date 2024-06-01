@@ -1,19 +1,19 @@
 import gleam/int
-import gleam/option.{type Option, None, Some}
+import gleam/option
 import gleam/string
 
 pub type Decimal {
   Decimal(before: Int, after: Int)
 }
 
-pub fn parse(d: String) -> Option(Decimal) {
+pub fn parse(d: String) -> option.Option(Decimal) {
   case string.split(d, ".") {
     [whole, dec] ->
       case int.parse(whole), int.parse(dec) {
-        Ok(i1), Ok(i2) -> Some(Decimal(before: i1, after: i2))
-        _, _ -> None
+        Ok(i1), Ok(i2) -> option.Some(Decimal(before: i1, after: i2))
+        _, _ -> option.None
       }
-    _ -> None
+    _ -> option.None
   }
 }
 
