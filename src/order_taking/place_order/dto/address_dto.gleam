@@ -1,4 +1,5 @@
-import gleam/option.{type Option, None}
+import gleam/json
+import gleam/option
 import gleam/result.{try}
 import order_taking/common/compound_types
 import order_taking/common/public_types
@@ -8,12 +9,36 @@ import order_taking/common/simple_types/zip_code
 pub type AddressDto {
   AddressDto(
     address_line_1: String,
-    address_line_2: Option(String),
-    address_line_3: Option(String),
-    address_line_4: Option(String),
+    address_line_2: option.Option(String),
+    address_line_3: option.Option(String),
+    address_line_4: option.Option(String),
     city: String,
     zip_code: String,
   )
+}
+
+pub fn to_json(dto: AddressDto) {
+  json.object([
+    #("address_line_1", json.string(dto.address_line_1)),
+    #(
+      "address_line_2",
+      dto.address_line_2
+        |> option.map(json.string)
+        |> option.unwrap(json.null()),
+    ),
+    #(
+      "address_line_3",
+      dto.address_line_3
+        |> option.map(json.string)
+        |> option.unwrap(json.null()),
+    ),
+    #(
+      "address_line_4",
+      dto.address_line_4
+        |> option.map(json.string)
+        |> option.unwrap(json.null()),
+    ),
+  ])
 }
 
 /// This always succeeds because there is no validation.
@@ -43,17 +68,17 @@ pub fn to_address(dto: AddressDto) -> Result(compound_types.Address, String) {
   use address_line_2 <- try(
     dto.address_line_2
     |> option.map(fn(addr) { string50.create_option(addr, "address_line_2") })
-    |> option.unwrap(Ok(None)),
+    |> option.unwrap(Ok(option.None)),
   )
   use address_line_3 <- try(
     dto.address_line_3
     |> option.map(fn(addr) { string50.create_option(addr, "address_line_3") })
-    |> option.unwrap(Ok(None)),
+    |> option.unwrap(Ok(option.None)),
   )
   use address_line_4 <- try(
     dto.address_line_4
     |> option.map(fn(addr) { string50.create_option(addr, "address_line_4") })
-    |> option.unwrap(Ok(None)),
+    |> option.unwrap(Ok(option.None)),
   )
   use city <- try(dto.city |> string50.create("city"))
   use zip_code <- try(dto.zip_code |> zip_code.create("zip_code"))
