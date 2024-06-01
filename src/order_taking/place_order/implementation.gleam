@@ -3,6 +3,7 @@ import gleam/option
 import gleam/result.{try}
 import order_taking/common/compound_types
 import order_taking/common/public_types
+import order_taking/common/simple_types/billing_amount
 import order_taking/common/simple_types/email_address
 import order_taking/common/simple_types/order_id
 import order_taking/common/simple_types/order_line_id
@@ -301,30 +302,31 @@ pub fn to_order_quantity(quantity, product_code) {
 
 /// Helper function for validateOrder
 pub fn to_validated_order_line(
-  unvalidated_order_line: public_types.UnvalidatedOrderLine,
   check_product_code_exists: CheckProductCodeExists,
 ) {
-  use order_line_id <- try(
-    unvalidated_order_line.order_line_id
-    |> to_order_line_id,
-  )
-  use product_code <- try(
-    unvalidated_order_line.product_code
-    |> to_product_code(check_product_code_exists),
-  )
-  use quantity <- try(
-    unvalidated_order_line.quantity
-    |> to_order_quantity(product_code),
-  )
-
-  let validated_order_line =
-    ValidatedOrderLine(
-      order_line_id: order_line_id,
-      product_code: product_code,
-      quantity: quantity,
+  fn(unvalidated_order_line: public_types.UnvalidatedOrderLine) {
+    use order_line_id <- try(
+      unvalidated_order_line.order_line_id
+      |> to_order_line_id,
+    )
+    use product_code <- try(
+      unvalidated_order_line.product_code
+      |> to_product_code(check_product_code_exists),
+    )
+    use quantity <- try(
+      unvalidated_order_line.quantity
+      |> to_order_quantity(product_code),
     )
 
-  Ok(validated_order_line)
+    let validated_order_line =
+      ValidatedOrderLine(
+        order_line_id: order_line_id,
+        product_code: product_code,
+        quantity: quantity,
+      )
+
+    Ok(validated_order_line)
+  }
 }
 
 pub fn validate_order(
@@ -358,9 +360,7 @@ pub fn validate_order(
   )
   use lines <- result.try(
     unvalidated_order.lines
-    |> list.map(fn(order) {
-      order |> to_validated_order_line(check_product_code_exists)
-    })
+    |> list.map(to_validated_order_line(check_product_code_exists))
     |> result.all,
   )
   let validated_order =
@@ -373,73 +373,93 @@ pub fn validate_order(
     )
   Ok(validated_order)
 }
-// // ---------------------------
-// // PriceOrder step
-// // ---------------------------
 
-// let toPricedOrderLine (getProductPrice:GetProductPrice) (validatedOrderLine:ValidatedOrderLine) =
-//     result {
-//         let qty = validatedOrderLine.quantity |> order_quantity.value
-//         let price = validatedOrderLine.product_code |> getProductPrice
-//         let! linePrice =
-//             Price.multiply qty price
-//             |> Result.mapError PricingError // convert to PlaceOrderError
-//         let pricedLine : PricedOrderLine = {
-//             order_line_id = validatedOrderLine.order_line_id
-//             product_code = validatedOrderLine.product_code
-//             quantity = validatedOrderLine.quantity
-//             LinePrice = linePrice
-//             }
-//         return pricedLine
-//     }
+// ---------------------------
+// PriceOrder step
+// ---------------------------
 
-// let priceOrder : PriceOrder =
-//     fun getProductPrice validatedOrder ->
-//         result {
-//             let! lines =
-//                 validatedOrder.Lines
-//                 |> List.map (toPricedOrderLine getProductPrice)
-//                 |> Result.sequence // convert list of Results to a single Result
-//             let! amountToBill =
-//                 lines
-//                 |> List.map (fun line -> line.LinePrice)  // get each line price
-//                 |> BillingAmount.sumPrices                // add them together as a BillingAmount
-//                 |> Result.mapError PricingError           // convert to PlaceOrderError
-//             let pricedOrder : PricedOrder = {
-//                 order_id  = validatedOrder.order_id
-//                 customer_info = validatedOrder.customer_info
-//                 shipping_address = validatedOrder.shipping_address
-//                 billing_address = validatedOrder.billing_address
-//                 Lines = lines
-//                 AmountToBill = amountToBill
-//             }
-//             return pricedOrder
-//         }
+pub fn to_priced_order_line(get_product_price: GetProductPrice) {
+  fn(validated_order_line: ValidatedOrderLine) {
+    let qty = validated_order_line.quantity |> order_quantity.value
+    let price = validated_order_line.product_code |> get_product_price
+    use line_price <- try(
+      price.multiply(price, qty)
+      |> result.map_error(public_types.PricingError),
+      // convert to PlaceOrderError
+    )
+    let priced_line =
+      public_types.PricedOrderLine(
+        order_line_id: validated_order_line.order_line_id,
+        product_code: validated_order_line.product_code,
+        quantity: validated_order_line.quantity,
+        line_price: line_price,
+      )
 
-// // ---------------------------
-// // AcknowledgeOrder step
-// // ---------------------------
+    Ok(priced_line)
+  }
+}
 
-// let acknowledgeOrder : AcknowledgeOrder =
-//     fun createAcknowledgmentLetter sendAcknowledgment pricedOrder ->
-//         let letter = createAcknowledgmentLetter pricedOrder
-//         let acknowledgment = {
-//             email_address = pricedOrder.customer_info.email_address
-//             Letter = letter
-//             }
+pub fn price_order(get_product_price, validated_order: ValidatedOrder) {
+  use lines <- try(
+    validated_order.lines
+    |> list.map(to_priced_order_line(get_product_price))
+    |> result.all,
+    // convert list of Results to a single Result
+  )
 
-//         // if the acknowledgement was successfully sent,
-//         // return the corresponding event, else return None
-//         match sendAcknowledgment acknowledgment with
-//         | Sent ->
-//             let event = {
-//                 order_id = pricedOrder.order_id
-//                 email_address = pricedOrder.customer_info.email_address
-//                 }
-//             Some event
-//         | NotSent ->
-//             None
+  use amount_to_bill <- try(
+    lines
+    |> list.map(fn(line) { line.line_price })
+    // get each line price
+    |> billing_amount.sum_prices
+    // add them together as a BillingAmount
+    |> result.map_error(public_types.PricingError),
+    // convert to PlaceOrderError
+  )
+  let priced_order =
+    public_types.PricedOrder(
+      order_id: validated_order.order_id,
+      customer_info: validated_order.customer_info,
+      shipping_address: validated_order.shipping_address,
+      billing_address: validated_order.billing_address,
+      lines: lines,
+      amount_to_bill: amount_to_bill,
+    )
+  Ok(priced_order)
+}
 
+// ---------------------------
+// AcknowledgeOrder step
+// ---------------------------
+
+pub fn acknowledge_order(
+  create_acknowledgment_letter,
+  send_acknowledgment,
+  priced_order: public_types.PricedOrder,
+) {
+  let letter = create_acknowledgment_letter(priced_order)
+  let acknowledgment =
+    OrderAcknowledgment(
+      email_address: priced_order.customer_info.email_address,
+      letter: letter,
+    )
+
+  // if the acknowledgement was successfully sent,
+  // return the corresponding event, else return None
+  case send_acknowledgment(acknowledgment) {
+    Sent -> {
+      let event =
+        public_types.OrderAcknowledgmentSent(
+          order_id: priced_order.order_id,
+          email_address: priced_order.customer_info.email_address,
+        )
+      option.Some(event)
+    }
+    NotSent -> {
+      option.None
+    }
+  }
+}
 // // ---------------------------
 // // Create events
 // // ---------------------------
