@@ -1,6 +1,5 @@
 import gleam/option.{type Option}
 import order_taking/common/compound_types.{type Address, type CustomerInfo}
-import order_taking/common/decimal.{type Decimal}
 import order_taking/common/simple_types/billing_amount.{type BillingAmount}
 import order_taking/common/simple_types/email_address.{type EmailAddress}
 import order_taking/common/simple_types/order_id.{type OrderId}
@@ -40,7 +39,7 @@ pub type UnvalidatedOrderLine {
   UnvalidatedOrderLine(
     order_line_id: String,
     product_code: String,
-    quantity: Decimal,
+    quantity: String,
   )
 }
 

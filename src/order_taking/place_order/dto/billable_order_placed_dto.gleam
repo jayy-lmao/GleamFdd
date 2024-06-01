@@ -13,7 +13,7 @@ pub type BillableOrderPlacedDto {
   )
 }
 
-// For serialising
+/// For serialising
 pub fn to_json(dto: BillableOrderPlacedDto) {
   json.object([
     #("order_id", json.string(dto.order_id)),

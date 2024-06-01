@@ -1,3 +1,4 @@
+import gleam/dynamic
 import gleam/json
 import gleam/option
 import gleam/result.{try}
@@ -17,28 +18,29 @@ pub type AddressDto {
   )
 }
 
-// For serialising
+/// For deserialising
+pub fn from_json(json_string: String) -> Result(AddressDto, json.DecodeError) {
+  let decoder =
+    dynamic.decode6(
+      AddressDto,
+      dynamic.field("address_line_1", of: dynamic.string),
+      dynamic.field("address_line_2", of: dynamic.optional(dynamic.string)),
+      dynamic.field("address_line_3", of: dynamic.optional(dynamic.string)),
+      dynamic.field("address_line_4", of: dynamic.optional(dynamic.string)),
+      dynamic.field("city", of: dynamic.string),
+      dynamic.field("zip_code", of: dynamic.string),
+    )
+
+  json.decode(from: json_string, using: decoder)
+}
+
+/// For serialising
 pub fn to_json(dto: AddressDto) {
   json.object([
     #("address_line_1", json.string(dto.address_line_1)),
-    #(
-      "address_line_2",
-      dto.address_line_2
-        |> option.map(json.string)
-        |> option.unwrap(json.null()),
-    ),
-    #(
-      "address_line_3",
-      dto.address_line_3
-        |> option.map(json.string)
-        |> option.unwrap(json.null()),
-    ),
-    #(
-      "address_line_4",
-      dto.address_line_4
-        |> option.map(json.string)
-        |> option.unwrap(json.null()),
-    ),
+    #("address_line_2", json.nullable(dto.address_line_2, of: json.string)),
+    #("address_line_3", json.nullable(dto.address_line_3, of: json.string)),
+    #("address_line_4", json.nullable(dto.address_line_4, of: json.string)),
     #("city", json.string(dto.city)),
     #("zip_code", json.string(dto.zip_code)),
   ])

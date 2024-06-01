@@ -1,19 +1,18 @@
 import gleam/int
-import gleam/option
 import gleam/string
 
 pub type Decimal {
   Decimal(before: Int, after: Int)
 }
 
-pub fn parse(d: String) -> option.Option(Decimal) {
+pub fn parse(d: String) -> Result(Decimal, String) {
   case string.split(d, ".") {
     [whole, dec] ->
       case int.parse(whole), int.parse(dec) {
-        Ok(i1), Ok(i2) -> option.Some(Decimal(before: i1, after: i2))
-        _, _ -> option.None
+        Ok(i1), Ok(i2) -> Ok(Decimal(before: i1, after: i2))
+        _, _ -> Error("Invalid decimal: " <> d)
       }
-    _ -> option.None
+    _ -> Error("Invalid decimal: " <> d)
   }
 }
 

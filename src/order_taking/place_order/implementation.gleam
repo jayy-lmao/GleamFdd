@@ -281,6 +281,11 @@ fn to_product_code(
 
 /// Helper function for validateOrder
 fn to_order_quantity(quantity, product_code) {
+  use quantity <- try(
+    quantity
+    |> decimal.parse
+    |> result.map_error(public_types.ValidationError),
+  )
   product_code
   |> order_quantity.create(quantity, "order_quantity")
   |> result.map_error(public_types.ValidationError)

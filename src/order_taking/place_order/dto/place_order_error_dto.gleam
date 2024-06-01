@@ -1,7 +1,16 @@
+import gleam/json
 import order_taking/common/public_types
 
 pub type PlaceOrderErrorDto {
   PlaceOrderErrorDto(code: String, message: String)
+}
+
+/// For serialising
+pub fn to_json(dto: PlaceOrderErrorDto) {
+  json.object([
+    #("code", json.string(dto.code)),
+    #("message", json.string(dto.message)),
+  ])
 }
 
 pub fn from_domain(

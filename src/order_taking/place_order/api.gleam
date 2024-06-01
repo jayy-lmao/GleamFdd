@@ -6,13 +6,11 @@
 // 3) The output is turned into a DTO which is turned into a HttpResponse
 // ======================================================
 
-import gleam/http/request
 import gleam/http/response
 import gleam/json
 import gleam/list
-import gleam/result
-import order_taking/common/public_types
 import order_taking/common/simple_types/price
+import order_taking/place_order/dto/place_order_error_dto
 import order_taking/place_order/dto/place_order_event_dto
 import order_taking/place_order/implementation
 
@@ -72,23 +70,28 @@ pub fn workflow_result_to_http_reponse(result) -> response.Response(String) {
       // and serialize to JSON
       let json =
         dtos
-        |> list.map(fn(event) { todo })
+        |> list.map(place_order_event_dto.to_json)
+        |> fn(events) {
+          json.object([
+            #("events", json.array(from: events, of: fn(event) { event })),
+          ])
+          |> json.to_string
+        }
 
-      let response = response.Response()
+      let response =
+        response.Response(body: json, status: 200, headers: [
+          #("Content-Type", "application/json"),
+        ])
       response
     }
-    Error(err) ->
-      // // turn domain errors into a dto
-      // let dto = err |> PlaceOrderErrorDto.fromDomain
-      // // and serialize to JSON
-      // let json = serializeJson(dto )
-      // let response =
-      //     {
-      //     HttpStatusCode = 401
-      //     Body = json
-      //     }
-      // response
-      todo
+    Error(err) -> {
+      // turn domain errors into a dto
+      let dto = place_order_error_dto.from_domain(err)
+      // and serialize to JSON
+      let json = dto |> place_order_error_dto.to_json |> json.to_string
+      let response = response.Response(status: 401, body: json, headers: [])
+      response
+    }
   }
 }
 // let placeOrderApi : PlaceOrderApi =

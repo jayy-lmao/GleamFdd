@@ -1,4 +1,5 @@
-import order_taking/common/decimal.{type Decimal}
+import gleam/json
+import order_taking/common/decimal
 import order_taking/common/public_types
 import order_taking/common/simple_types/order_line_id
 import order_taking/common/simple_types/order_quantity
@@ -10,9 +11,19 @@ pub type PricedOrderLineDto {
   PricedOrderLineDto(
     order_line_id: String,
     product_code: String,
-    quantity: Decimal,
-    line_price: Decimal,
+    quantity: decimal.Decimal,
+    line_price: decimal.Decimal,
   )
+}
+
+/// For serialising
+pub fn to_json(dto: PricedOrderLineDto) {
+  json.object([
+    #("order_line_id", json.string(dto.order_line_id)),
+    #("product_code", json.string(dto.product_code)),
+    #("quantity", json.string(decimal.to_string(dto.quantity))),
+    #("line_price", json.string(decimal.to_string(dto.line_price))),
+  ])
 }
 
 /// Convert a PricedOrderLine object into the corresponding DTO.
