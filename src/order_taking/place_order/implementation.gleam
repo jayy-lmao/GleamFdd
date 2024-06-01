@@ -2,6 +2,7 @@ import gleam/list
 import gleam/option
 import gleam/result.{try}
 import order_taking/common/compound_types
+import order_taking/common/decimal
 import order_taking/common/public_types
 import order_taking/common/simple_types/billing_amount
 import order_taking/common/simple_types/email_address
@@ -34,7 +35,7 @@ import order_taking/common/simple_types/zip_code
 
 // Product validation
 
-pub type CheckProductCodeExists =
+type CheckProductCodeExists =
   fn(product_code.ProductCode) -> Bool
 
 // Address validation
@@ -47,7 +48,7 @@ pub type CheckedAddress {
   CheckedAddress(public_types.UnvalidatedAddress)
 }
 
-pub type CheckAddressExists =
+type CheckAddressExists =
   fn(public_types.UnvalidatedAddress) ->
     Result(CheckedAddress, AddressValidationError)
 
@@ -55,7 +56,7 @@ pub type CheckAddressExists =
 // Validated Order
 // ---------------------------
 
-pub type ValidatedOrderLine {
+type ValidatedOrderLine {
   ValidatedOrderLine(
     order_line_id: order_line_id.OrderLineId,
     product_code: product_code.ProductCode,
@@ -63,7 +64,7 @@ pub type ValidatedOrderLine {
   )
 }
 
-pub type ValidatedOrder {
+type ValidatedOrder {
   ValidatedOrder(
     order_id: order_id.OrderId,
     customer_info: compound_types.CustomerInfo,
@@ -83,7 +84,7 @@ pub type ValidateOrder =
 // Pricing step
 // ---------------------------
 
-pub type GetProductPrice =
+type GetProductPrice =
   fn(product_code.ProductCode) -> price.Price
 
 // priced state is defined Domain.WorkflowTypes
@@ -110,7 +111,7 @@ pub type OrderAcknowledgment {
   )
 }
 
-pub type CreateOrderAcknowledgmentLetter =
+type CreateOrderAcknowledgmentLetter =
   fn(public_types.PricedOrder) -> HtmlString
 
 /// Send the order acknowledgement to the customer
@@ -123,7 +124,7 @@ pub type SendResult {
   NotSent
 }
 
-pub type SendOrderAcknowledgment =
+type SendOrderAcknowledgment =
   fn(OrderAcknowledgment) -> SendResult
 
 pub type AcknowledgeOrder =
@@ -149,7 +150,7 @@ pub type CreateEvents =
 // ValidateOrder step
 // ---------------------------
 
-pub fn to_customer_info(
+fn to_customer_info(
   unvalidated_customer_info: public_types.UnvalidatedCustomerInfo,
 ) {
   use first_name <- try(
@@ -183,7 +184,7 @@ pub fn to_customer_info(
   Ok(customer_info)
 }
 
-pub fn to_address(checked_address: CheckedAddress) {
+fn to_address(checked_address: CheckedAddress) {
   let CheckedAddress(checked_address) = checked_address
 
   use address_line_1 <- try(
@@ -241,7 +242,7 @@ pub fn to_address(checked_address: CheckedAddress) {
 }
 
 /// Call the checkAddressExists and convert the error to a ValidationError
-pub fn to_checked_address(
+fn to_checked_address(
   address,
   check_address: CheckAddressExists,
 ) -> Result(CheckedAddress, public_types.ValidationError) {
@@ -255,7 +256,7 @@ pub fn to_checked_address(
   })
 }
 
-pub fn to_order_id(order_id) {
+fn to_order_id(order_id) {
   order_id
   |> order_id.create("order_id")
   |> result.map_error(public_types.ValidationError)
@@ -263,7 +264,7 @@ pub fn to_order_id(order_id) {
 }
 
 /// Helper function for validateOrder
-pub fn to_order_line_id(order_id) {
+fn to_order_line_id(order_id) {
   order_id
   |> order_line_id.create("order_line_id")
   |> result.map_error(public_types.ValidationError)
@@ -271,7 +272,7 @@ pub fn to_order_line_id(order_id) {
 }
 
 /// Helper function for validateOrder
-pub fn to_product_code(
+fn to_product_code(
   product_code,
   check_product_code_exists: CheckProductCodeExists,
 ) {
@@ -293,7 +294,7 @@ pub fn to_product_code(
 }
 
 /// Helper function for validateOrder
-pub fn to_order_quantity(quantity, product_code) {
+fn to_order_quantity(quantity, product_code) {
   product_code
   |> order_quantity.create(quantity, "order_quantity")
   |> result.map_error(public_types.ValidationError)
@@ -301,9 +302,7 @@ pub fn to_order_quantity(quantity, product_code) {
 }
 
 /// Helper function for validateOrder
-pub fn to_validated_order_line(
-  check_product_code_exists: CheckProductCodeExists,
-) {
+fn to_validated_order_line(check_product_code_exists: CheckProductCodeExists) {
   fn(unvalidated_order_line: public_types.UnvalidatedOrderLine) {
     use order_line_id <- try(
       unvalidated_order_line.order_line_id
@@ -329,7 +328,7 @@ pub fn to_validated_order_line(
   }
 }
 
-pub fn validate_order(
+fn validate_order(
   check_product_code_exists,
   check_address_exists,
   unvalidated_order: public_types.UnvalidatedOrder,
@@ -378,7 +377,7 @@ pub fn validate_order(
 // PriceOrder step
 // ---------------------------
 
-pub fn to_priced_order_line(get_product_price: GetProductPrice) {
+fn to_priced_order_line(get_product_price: GetProductPrice) {
   fn(validated_order_line: ValidatedOrderLine) {
     let qty = validated_order_line.quantity |> order_quantity.value
     let price = validated_order_line.product_code |> get_product_price
@@ -399,7 +398,7 @@ pub fn to_priced_order_line(get_product_price: GetProductPrice) {
   }
 }
 
-pub fn price_order(get_product_price, validated_order: ValidatedOrder) {
+fn price_order(get_product_price, validated_order: ValidatedOrder) {
   use lines <- try(
     validated_order.lines
     |> list.map(to_priced_order_line(get_product_price))
@@ -432,10 +431,10 @@ pub fn price_order(get_product_price, validated_order: ValidatedOrder) {
 // AcknowledgeOrder step
 // ---------------------------
 
-pub fn acknowledge_order(
+fn acknowledge_order(
+  priced_order: public_types.PricedOrder,
   create_acknowledgment_letter,
   send_acknowledgment,
-  priced_order: public_types.PricedOrder,
 ) {
   let letter = create_acknowledgment_letter(priced_order)
   let acknowledgment =
@@ -460,78 +459,103 @@ pub fn acknowledge_order(
     }
   }
 }
-// // ---------------------------
-// // Create events
-// // ---------------------------
 
-// let createOrderPlacedEvent (placedOrder:PricedOrder) : OrderPlaced =
-//     placedOrder
+// ---------------------------
+// Create events
+// ---------------------------
 
-// let createBillingEvent (placedOrder:PricedOrder) : BillableOrderPlaced option =
-//     let billingAmount = placedOrder.AmountToBill |> BillingAmount.value
-//     if billingAmount > 0M then
-//         {
-//         order_id = placedOrder.order_id
-//         billing_address = placedOrder.billing_address
-//         AmountToBill = placedOrder.AmountToBill
-//         } |> Some
-//     else
-//         None
+fn create_order_placed_event(placed_order: public_types.PricedOrder) {
+  public_types.OrderPlacedEvent(placed_order)
+}
 
-// /// helper to convert an Option into a List
-// let listOfOption opt =
-//     match opt with
-//     | Some x -> [x]
-//     | None -> []
+fn create_billing_event(
+  placed_order: public_types.PricedOrder,
+) -> option.Option(public_types.BillableOrderPlaced) {
+  let billing_amount = placed_order.amount_to_bill |> billing_amount.value
 
-// let createEvents : CreateEvents =
-//     fun pricedOrder acknowledgmentEventOpt ->
-//         let acknowledgmentEvents =
-//             acknowledgmentEventOpt
-//             |> Option.map PlaceOrderEvent.AcknowledgmentSent
-//             |> listOfOption
-//         let orderPlacedEvents =
-//             pricedOrder
-//             |> createOrderPlacedEvent
-//             |> PlaceOrderEvent.OrderPlaced
-//             |> List.singleton
-//         let billingEvents =
-//             pricedOrder
-//             |> createBillingEvent
-//             |> Option.map PlaceOrderEvent.BillableOrderPlaced
-//             |> listOfOption
+  case decimal.gt(billing_amount, decimal.from_int(0)) {
+    True ->
+      public_types.BillableOrderPlaced(
+        order_id: placed_order.order_id,
+        billing_address: placed_order.billing_address,
+        amount_to_bill: placed_order.amount_to_bill,
+      )
+      |> option.Some
+    False -> option.None
+  }
+}
 
-//         // return all the events
-//         [
-//         yield! acknowledgmentEvents
-//         yield! orderPlacedEvents
-//         yield! billingEvents
-//         ]
+/// helper to convert an Option into a List
+fn list_of_option(opt) {
+  case opt {
+    option.Some(x) -> [x]
+    option.None -> []
+  }
+}
 
-// // ---------------------------
-// // overall workflow
-// // ---------------------------
+fn create_events(
+  priced_order,
+  acknowledgment_event_opt,
+) -> List(public_types.PlaceOrderEvent) {
+  let acknowledgment_events =
+    acknowledgment_event_opt
+    |> option.map(public_types.AcknowledgmentSentEvent)
+    |> list_of_option
 
-// let placeOrder
-//     checkProductExists // dependency
-//     checkAddressExists // dependency
-//     getProductPrice    // dependency
-//     createOrderAcknowledgmentLetter  // dependency
-//     sendOrderAcknowledgment // dependency
-//     : PlaceOrder =       // definition of function
+  let order_placed_events =
+    priced_order
+    |> create_order_placed_event
+    |> fn(event) { [event] }
 
-//     fun unvalidatedOrder ->
-//         asyncResult {
-//             let! validatedOrder =
-//                 validateOrder checkProductExists checkAddressExists unvalidatedOrder
-//                 |> AsyncResult.mapError PlaceOrderError.Validation
-//             let! pricedOrder =
-//                 priceOrder getProductPrice validatedOrder
-//                 |> AsyncResult.ofResult
-//                 |> AsyncResult.mapError PlaceOrderError.Pricing
-//             let acknowledgementOption =
-//                 acknowledgeOrder createOrderAcknowledgmentLetter sendOrderAcknowledgment pricedOrder
-//             let events =
-//                 createEvents pricedOrder acknowledgementOption
-//             return events
-//         }
+  let billing_events =
+    priced_order
+    |> create_billing_event
+    |> option.map(public_types.BillableOrderPlacedEvent)
+    |> list_of_option
+
+  // return all the events
+  list.flatten([acknowledgment_events, order_placed_events, billing_events])
+}
+
+// ---------------------------
+// overall workflow
+// ---------------------------
+
+pub fn place_order(
+  check_product_exists,
+  // dependency
+  check_address_exists,
+  // dependency
+  get_product_price,
+  // dependency
+  create_order_acknowledgment_letter,
+  // dependency
+  send_order_acknowledgment,
+  // dependency
+) -> public_types.PlaceOrder {
+  // definition of function
+
+  fn(unvalidated_order) {
+    use validated_order <- try(
+      validate_order(
+        check_product_exists,
+        check_address_exists,
+        unvalidated_order,
+      )
+      |> result.map_error(public_types.ValidationErrorKind),
+    )
+    use priced_order <- try(
+      price_order(get_product_price, validated_order)
+      |> result.map_error(public_types.PricingErrorKind),
+    )
+
+    let acknowledgement_option =
+      priced_order
+      |> acknowledge_order(
+        create_order_acknowledgment_letter,
+        send_order_acknowledgment,
+      )
+    let events = create_events(priced_order, acknowledgement_option)
+    Ok(events)
+  }
+}
