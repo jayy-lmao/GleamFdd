@@ -99,7 +99,7 @@ pub type BillableOrderPlaced {
 
 /// The possible events resulting from the PlaceOrder workflow
 /// Not all events will occur, depending on the logic of the workflow
-pub type PlacedOrderEvent {
+pub type PlaceOrderEvent {
   OrderPlacedEvent(OrderPlaced)
   BillableOrderPlacedEvent(BillableOrderPlaced)
   AcknowledgmentSentEvent(OrderAcknowledgmentSent)
@@ -135,4 +135,4 @@ pub type PlaceOrderError {
 // the workflow itself
 
 pub type PlaceOrder =
-  fn(UnvalidatedOrder) -> Result(List(PlacedOrderEvent), PlaceOrderError)
+  fn(UnvalidatedOrder) -> Result(List(PlaceOrderEvent), PlaceOrderError)

@@ -16,7 +16,7 @@ pub type PlacedOrdeEventDto {
 /// Convert a PlaceOrderEvent into the corresponding DTO.
 /// Used when exporting from the domain to the outside world.
 pub fn from_domain(
-  domain_obj: public_types.PlacedOrderEvent,
+  domain_obj: public_types.PlaceOrderEvent,
 ) -> PlacedOrdeEventDto {
   case domain_obj {
     public_types.OrderPlacedEvent(obj) ->
