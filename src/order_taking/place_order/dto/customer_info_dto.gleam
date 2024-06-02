@@ -15,7 +15,7 @@ pub type CustomerInfoDto {
 }
 
 /// For deserialising
-pub fn decoder(json_string: String) {
+pub fn decoder() {
   let decoder =
     dynamic.decode3(
       CustomerInfoDto,

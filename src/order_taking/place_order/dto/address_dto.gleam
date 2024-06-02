@@ -24,9 +24,9 @@ pub fn decoder() {
     dynamic.decode6(
       AddressDto,
       dynamic.field("address_line_1", of: dynamic.string),
-      dynamic.field("address_line_2", of: dynamic.optional(dynamic.string)),
-      dynamic.field("address_line_3", of: dynamic.optional(dynamic.string)),
-      dynamic.field("address_line_4", of: dynamic.optional(dynamic.string)),
+      dynamic.optional_field("address_line_2", of: dynamic.string),
+      dynamic.optional_field("address_line_3", of: dynamic.string),
+      dynamic.optional_field("address_line_4", of: dynamic.string),
       dynamic.field("city", of: dynamic.string),
       dynamic.field("zip_code", of: dynamic.string),
     )

@@ -6,11 +6,17 @@
 // 3) The output is turned into a DTO which is turned into a HttpResponse
 // ======================================================
 
+import gleam/bit_array
+import gleam/bytes_builder
+import gleam/dynamic
 import gleam/http/request
 import gleam/http/response
+import gleam/io
 import gleam/json
 import gleam/list
 import gleam/result
+import gleam/string
+import mist
 import order_taking/common/simple_types/price
 import order_taking/place_order/dto/order_form_dto
 import order_taking/place_order/dto/place_order_error_dto
@@ -62,7 +68,9 @@ pub fn send_order_acknowledgment(_order_acknowledgement) {
 // // -------------------------------
 
 /// This function converts the workflow output into a HttpResponse
-pub fn workflow_result_to_http_reponse(result) -> response.Response(String) {
+pub fn workflow_result_to_http_reponse(
+  result,
+) -> response.Response(mist.ResponseData) {
   case result {
     Ok(events) -> {
       // turn domain events into dtos
@@ -81,30 +89,40 @@ pub fn workflow_result_to_http_reponse(result) -> response.Response(String) {
           |> json.to_string
         }
 
-      let response =
-        response.Response(body: json, status: 200, headers: [
-          #("Content-Type", "application/json"),
-        ])
-      response
+      // let response =
+      //   response.Response(body: json, status: 200, headers: [
+      //     #("Content-Type", "application/json"),
+      //   ])
+      // response
+      response.new(200)
+      |> response.prepend_header("content-type", "application/json")
+      |> response.set_body(mist.Bytes(bytes_builder.from_string(json)))
     }
     Error(err) -> {
       // turn domain errors into a dto
       let dto = place_order_error_dto.from_domain(err)
       // and serialize to JSON
       let json = dto |> place_order_error_dto.to_json |> json.to_string
-      let response = response.Response(status: 401, body: json, headers: [])
-      response
+      response.new(401)
+      |> response.prepend_header("content-type", "application/json")
+      |> response.set_body(mist.Bytes(bytes_builder.from_string(json)))
     }
   }
 }
 
 pub fn place_order_api(
-  request: request.Request(String),
-) -> response.Response(String) {
+  request: request.Request(mist.Connection),
+) -> response.Response(mist.ResponseData) {
   // following the approach in "A Complete Serialization Pipeline" in chapter 11
 
   // start with a string
-  let order_form_json = request.body
+  let order_form_json =
+    mist.read_body(request, 300_000)
+    |> result.map(fn(req) { req.body })
+    |> result.map(bit_array.to_string)
+    |> result.unwrap(Ok(""))
+    |> result.unwrap("")
+
   let order_form =
     json.decode(from: order_form_json, using: order_form_dto.decoder())
 
@@ -135,14 +153,32 @@ pub fn place_order_api(
       result
       |> workflow_result_to_http_reponse
     }
-    Error(_json_error) -> {
-      let response =
-        response.Response(
-          status: 403,
-          body: "JSON deserialisation error",
-          headers: [],
+    Error(json_error) -> {
+      io.debug(json_error)
+      let message = case json_error {
+        json.UnexpectedFormat(decode_errors) -> {
+          decode_errors
+          |> list.map(fn(err) {
+            let dynamic.DecodeError(_, _, err_path) = err
+            string.join(err_path, ".")
+          })
+          |> string.join(", ")
+        }
+        _ -> "Json deser error"
+      }
+
+      // response.new(401)
+      // |> response.set_body(mist.Bytes(bytes_builder.from_string(message)))
+      let json =
+        place_order_error_dto.PlaceOrderErrorDto(
+          code: "DeserialisationError",
+          message: message,
         )
-      response
+        |> place_order_error_dto.to_json
+        |> json.to_string
+      response.new(401)
+      |> response.prepend_header("content-type", "application/json")
+      |> response.set_body(mist.Bytes(bytes_builder.from_string(json)))
     }
   }
 }
