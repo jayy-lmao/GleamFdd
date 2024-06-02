@@ -167,8 +167,8 @@ pub fn place_order_api(
         _ -> "Json deser error"
       }
 
-      // response.new(401)
-      // |> response.set_body(mist.Bytes(bytes_builder.from_string(message)))
+      // Maybe ideally this should live somewhere in the public domain etc
+      // But happy for it to be here for now
       let json =
         place_order_error_dto.PlaceOrderErrorDto(
           code: "DeserialisationError",
