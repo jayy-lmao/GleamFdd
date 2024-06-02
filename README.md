@@ -1,4 +1,9 @@
-# fddd_library
+# DomainModellingMadeFunctional (Gleam Edition!)
+
+This is a port of https://github.com/swlaschin/DomainModelingMadeFunctional for the Gleam language.
+Semi WIP.
+
+## fddd_library details
 
 [![Package Version](https://img.shields.io/hexpm/v/fddd_library)](https://hex.pm/packages/fddd_library)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/fddd_library/)
